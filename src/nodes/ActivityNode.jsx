@@ -33,21 +33,21 @@ export default memo(function ActivityNode({ id, data }) {
         top: NODE_H / 2,
         left: 0,
         transform: "translate(-50%, -50%)",
-        width: 10,
-        height: 10,
-        background: "#FFFFFF",
-        border: "2px solid #2563EB",
-      }} />
+        width: 0,
+        height: 0,
+        background: "transparent",
+        border: "none",
+      }} className="visible-handle activity-handle" />
       <Handle type="source" position={Position.Right} style={{
         position: "absolute",
         top: NODE_H / 2,
         left: ACT_W,
         transform: "translate(-50%, -50%)",
-        width: 10,
-        height: 10,
-        background: "#FFFFFF",
-        border: "2px solid #2563EB",
-      }} />
+        width: 0,
+        height: 0,
+        background: "transparent",
+        border: "none",
+      }} className="visible-handle activity-handle" />
     </div>
   );
 });

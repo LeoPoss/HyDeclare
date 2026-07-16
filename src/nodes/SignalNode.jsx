@@ -79,13 +79,14 @@ export default memo(function SignalNode({ id, data }) {
               style={{
                 position: "absolute",
                 top: y,
-                left: SIG_W,
+                left: SIG_W + PORT_R,
                 transform: "translate(-50%, -50%)",
                 background: "transparent",
                 border: "none",
-                width: 32,
-                height: 32,
+                width: 0,
+                height: 0,
               }}
+              className="port-handle"
             />
             <Handle
               type="target"
@@ -94,14 +95,15 @@ export default memo(function SignalNode({ id, data }) {
               style={{
                 position: "absolute",
                 top: y,
-                left: SIG_W,
+                left: SIG_W + PORT_R,
                 transform: "translate(-50%, -50%)",
                 background: "transparent",
                 border: "none",
-                width: 32,
-                height: 32,
+                width: 0,
+                height: 0,
                 pointerEvents: isConnecting ? "all" : "none",
               }}
+              className="port-handle"
             />
           </React.Fragment>
         );

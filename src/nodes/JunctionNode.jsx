@@ -36,21 +36,21 @@ export default memo(function JunctionNode({ id, data }) {
         top: JUNC_R,
         left: 0,
         transform: "translate(-50%, -50%)",
-        width: 10,
-        height: 10,
-        background: "#FFFFFF",
-        border: "2px solid #7C3AED",
-      }} />
+        width: 0,
+        height: 0,
+        background: "transparent",
+        border: "none",
+      }} className="visible-handle junction-handle" />
       <Handle type="source" position={Position.Right} style={{
         position: "absolute",
         top: JUNC_R,
         left: JUNC_R * 2,
         transform: "translate(-50%, -50%)",
-        width: 10,
-        height: 10,
-        background: "#FFFFFF",
-        border: "2px solid #7C3AED",
-      }} />
+        width: 0,
+        height: 0,
+        background: "transparent",
+        border: "none",
+      }} className="visible-handle junction-handle" />
     </div>
   );
 });
