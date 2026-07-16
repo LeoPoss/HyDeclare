@@ -12,9 +12,9 @@ export default memo(function JunctionNode({ id, data }) {
   const on = sel?.kind === "junctions" && sel.id === id;
   const tg = tagOf(id);
 
-  const sig = "#7C3AED";
-  const sigSoft = "#F5F1FE";
-  const sigStroke2 = "#C4B5FD";
+  const sig = "#0369a1";
+  const sigSoft = "#e0f2fe";
+  const sigStroke2 = "#7dd3fc";
 
   return (
     <div style={{ width: JUNC_R * 2, height: JUNC_R * 2, position: "relative" }}>

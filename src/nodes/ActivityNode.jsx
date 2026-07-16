@@ -13,9 +13,9 @@ export default memo(function ActivityNode({ id, data }) {
   const on = sel?.kind === "activities" && sel.id === id;
   const tg = tagOf(id);
 
-  const act = "#2563EB";
-  const actSoft = "#EFF6FF";
-  const actStroke = "#C3D7FC";
+  const act = "#3f3f46";
+  const actSoft = "#f4f4f5";
+  const actStroke = "#d4d4d8";
 
   return (
     <div style={{ width: ACT_W, height: NODE_H, position: "relative" }}>

@@ -1,8 +1,8 @@
 import React from "react";
 
 export default function Badge({ x, y, d, from }) {
-  const sus = "#B45309";
-  const fill = "#FEF3E2";
+  const sus = "#b45309";
+  const fill = "#fef3c7";
 
   return (
     <g>

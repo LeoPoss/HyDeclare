@@ -8,7 +8,7 @@ import { sigHeight } from "../geometry";
 
 const C = {
   card: "#FFFFFF", faint: "#A1A1AA", blue: "#2563EB", blueSoft: "#EFF6FF",
-  sig: "#7C3AED", sigSoft: "#F5F1FE", sigStroke: "#DDD2F8", sigStroke2: "#C4B5FD",
+  sig: "#0369a1", sigSoft: "#e0f2fe", sigStroke: "#bae6fd", sigStroke2: "#7dd3fc",
 };
 const MONO = "ui-monospace, 'SF Mono', 'JetBrains Mono', 'Roboto Mono', Menlo, monospace";
 
@@ -32,8 +32,11 @@ export default memo(function SignalNode({ id, data }) {
         <path d={`M 13 18 q 4.5 -6 9 0 t 9 0`} stroke={C.sig} strokeWidth="1.6" fill="none" />
         <text x={SIG_W / 2} y={h / 2 + 5} fill={C.sig} fontSize="13" fontWeight="600"
           fontFamily={MONO} textAnchor="middle">{data.name}</text>
-        <text x={SIG_W - 10} y={18} fill={C.faint} fontSize="10" fontFamily={MONO} textAnchor="end"
-          onClick={(e) => { e.stopPropagation(); addPort(id); }} style={{ cursor: "pointer" }}>+ port</text>
+        {/* + port button */}
+        <g onClick={(e) => { e.stopPropagation(); addPort(id); }} style={{ cursor: "pointer" }}>
+          <rect x={SIG_W - 48} y={6} width={38} height={16} rx={4} fill="none" stroke={C.sigStroke} strokeWidth={1} />
+          <text x={SIG_W - 29} y={17} fill={C.sig} opacity={0.7} fontSize="9" fontWeight="500" fontFamily={MONO} textAnchor="middle" style={{ pointerEvents: "none" }}>+ port</text>
+        </g>
 
         {ports.map((p) => {
           const s = model.signals.find((x) => x.id === p.signal);

@@ -1,9 +1,9 @@
 import React from "react";
 
-const OK = "#15803D";
-const OK_SOFT = "#F0FDF4";
-const BAN = "#DC2626";
-const BAN_SOFT = "#FEF2F2";
+const OK = "#15803d";
+const OK_SOFT = "#dcfce7";
+const BAN = "#b91c1c";
+const BAN_SOFT = "#fee2e2";
 const MONO = "ui-monospace, 'SF Mono', 'JetBrains Mono', 'Roboto Mono', Menlo, monospace";
 
 export default function Tag({ x, y, type }) {

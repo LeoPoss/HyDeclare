@@ -17,5 +17,5 @@ export default function MemberEdge({
     targetY,
     targetPosition,
   });
-  return <BaseEdge id={id} path={path} style={{ stroke: "#7C3AED", strokeWidth: 1.6, opacity: 0.45 }} />;
+  return <BaseEdge id={id} path={path} style={{ stroke: "#0369a1", strokeWidth: 1.6, opacity: 0.45 }} />;
 }
