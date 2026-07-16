@@ -3,16 +3,18 @@ FROM node:26-alpine AS build
 
 WORKDIR /app
 
-COPY package.json package-lock.json* ./
-RUN npm ci
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
 
 COPY index.html vite.config.js ./
 COPY src/ ./src/
 
-RUN npm run build
+RUN pnpm run build
 
 # ---- Stage 2: serve ----
-FROM nginx:1.27-alpine
+FROM nginx:1-alpine
 
 RUN rm -rf /usr/share/nginx/html/*
 
