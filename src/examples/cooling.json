@@ -1,0 +1,18 @@
+{
+  "signals": [{ "id": "s1", "name": "Temp", "x": 80, "y": 140 }],
+  "ports": [
+    { "id": "p1", "signal": "s1", "op": ">", "k": 90, "delta": 10 },
+    { "id": "p2", "signal": "s1", "op": ">", "k": 80, "delta": 10 },
+    { "id": "p3", "signal": "s1", "op": "<", "k": 50, "delta": 20 }
+  ],
+  "junctions": [],
+  "activities": [
+    { "id": "a1", "name": "StartCooling", "x": 540, "y": 160 },
+    { "id": "a2", "name": "Restart", "x": 540, "y": 262 }
+  ],
+  "constraints": [
+    { "id": "Φ₁", "type": "NotExistence", "theta": "p1", "I": [0, "m"] },
+    { "id": "Φ₂", "type": "Response", "theta1": "p2", "theta2": "a1", "Ia": [0, "m"], "Ir": [0, 5] },
+    { "id": "Φ₃", "type": "Precedence", "theta1": "p3", "theta2": "a2", "Ia": [0, 20], "Ir": [0, "m"] }
+  ]
+}

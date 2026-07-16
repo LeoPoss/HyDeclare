@@ -1,0 +1,8 @@
+services:
+  hydeclare:
+    build: .
+    image: hydeclare-editor:latest
+    container_name: hydeclare
+    restart: unless-stopped
+    ports:
+      - "8080:80"

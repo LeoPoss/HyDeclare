@@ -1,0 +1,22 @@
+{
+  "signals": [
+    { "id": "s1", "name": "Temp", "x": 60, "y": 110 },
+    { "id": "s2", "name": "Pressure", "x": 60, "y": 285 }
+  ],
+  "ports": [
+    { "id": "p1", "signal": "s1", "op": ">", "k": 80, "delta": null },
+    { "id": "p3", "signal": "s1", "op": "<", "k": 50, "delta": 20 },
+    { "id": "p2", "signal": "s2", "op": ">", "k": 20, "delta": null }
+  ],
+  "junctions": [
+    { "id": "j1", "op": "AND", "members": ["p1", "p2"], "delta": 5, "x": 330, "y": 150 }
+  ],
+  "activities": [
+    { "id": "a1", "name": "EmergencyStop", "x": 540, "y": 128 },
+    { "id": "a2", "name": "Restart", "x": 540, "y": 290 }
+  ],
+  "constraints": [
+    { "id": "Ξ₁", "type": "Response", "theta1": "j1", "theta2": "a1", "Ia": [0, "m"], "Ir": [0, 3] },
+    { "id": "Φ₂", "type": "Precedence", "theta1": "p3", "theta2": "a2", "Ia": [0, 20], "Ir": [0, "m"] }
+  ]
+}

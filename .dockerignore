@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.env
+.DS_Store
+*.md
+.git/
+*.tex
+*.pdf
+*.eps
+*.png        # keep editor-screenshot.png outside the image — copy only what's needed
