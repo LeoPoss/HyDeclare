@@ -60,7 +60,7 @@ export default function ConstraintEdge({
             pointerEvents: "all", fontFamily: MONO, fontSize: 10, textAlign: "center", lineHeight: 1.4,
             color: "#6d28d9",
           }}>
-            {win}
+            {win}s
           </div>
         )}
         <div style={{
