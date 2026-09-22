@@ -6,10 +6,9 @@ import SignalNode from "../nodes/SignalNode";
 import ActivityNode from "../nodes/ActivityNode";
 import JunctionNode from "../nodes/JunctionNode";
 import ConstraintEdge from "../edges/ConstraintEdge";
-import MemberEdge from "../edges/MemberEdge";
 
 const nodeTypes = { signal: SignalNode, activity: ActivityNode, junction: JunctionNode };
-const edgeTypes = { constraint: ConstraintEdge, member: MemberEdge };
+const edgeTypes = { constraint: ConstraintEdge };
 
 export default function Canvas() {
   const {

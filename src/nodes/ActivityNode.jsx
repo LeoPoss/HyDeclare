@@ -26,7 +26,7 @@ export default memo(function ActivityNode({ id, data }) {
           strokeWidth={on ? 2 : 1.3} />
         <text x={ACT_W / 2} y={NODE_H / 2 + 5} fill={act} fontSize="12" fontWeight="600"
           fontFamily={MONO} textAnchor="middle" style={{ pointerEvents: "none" }}>{data.name}</text>
-        {tg && <Tag x={ACT_W / 2} y={0} type={tg.type} />}
+        {tg && <Tag x={ACT_W / 2} y={0} tag={tg} />}
       </svg>
       <Handle type="target" position={Position.Left} style={{
         position: "absolute",

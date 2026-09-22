@@ -32,7 +32,6 @@ export default memo(function SignalNode({ id, data }) {
         <path d={`M 13 18 q 4.5 -6 9 0 t 9 0`} stroke={C.sig} strokeWidth="1.6" fill="none" />
         <text x={SIG_W / 2} y={h / 2 + 5} fill={C.sig} fontSize="13" fontWeight="600"
           fontFamily={MONO} textAnchor="middle">{data.name}</text>
-        {/* + port button */}
         <g onClick={(e) => { e.stopPropagation(); addPort(id); }} style={{ cursor: "pointer" }}>
           <rect x={SIG_W - 48} y={6} width={38} height={16} rx={4} fill="none" stroke={C.sigStroke} strokeWidth={1} />
           <text x={SIG_W - 29} y={17} fill={C.sig} opacity={0.7} fontSize="9" fontWeight="500" fontFamily={MONO} textAnchor="middle" style={{ pointerEvents: "none" }}>+ port</text>
@@ -62,13 +61,12 @@ export default memo(function SignalNode({ id, data }) {
                 <Badge x={pos.x + 28} y={pos.y - 32} d={p.delta}
                   from={{ x: pos.x + PORT_R - 2, y: pos.y - 12 }} />
               )}
-              {tg && <Tag x={pos.x} y={pos.y - PORT_R} type={tg.type} />}
+              {tg && <Tag x={pos.x} y={pos.y - PORT_R} tag={tg} />}
             </g>
           );
         })}
       </svg>
 
-      {/* React Flow handles — right side, one source and target per port */}
       {ports.map((p, i) => {
         const mine = model.ports.filter((x) => x.signal === id);
         const sh = sigHeight(mine.length);

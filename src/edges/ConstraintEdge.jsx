@@ -3,6 +3,16 @@ import { iv } from "../lib/compiler";
 
 const MONO = "ui-monospace, 'SF Mono', 'JetBrains Mono', 'Roboto Mono', Menlo, monospace";
 
+/* Alternate is a double line, chain a banded one: underlays beneath the base
+   edge, which supplies the white gap. */
+function strengthLayers(strength, path, col) {
+  if (strength === "alternate")
+    return { under: [[col, 4.6]], baseColor: "#FFF", baseWidth: 1.9 };
+  if (strength === "chain")
+    return { under: [[col, 6], ["#FFF", 3.6]], baseColor: col, baseWidth: 1.1 };
+  return { under: [], baseColor: null, baseWidth: null };
+}
+
 export default function ConstraintEdge({
   id,
   sourceX,
@@ -27,7 +37,10 @@ export default function ConstraintEdge({
   const sel = data?.selected;
   const col = sel ? "#2563EB" : "#9CA3AF";
   const bwd = g.type === "Precedence" || g.type === "Succession";
-  const win = g.type === "Precedence" ? iv(g.Ia) : iv(g.Ir);
+  const win =
+    g.type === "RespondedExistence" ? null
+      : g.type === "Precedence" ? iv(g.Ia)
+        : iv(g.Ir);
   const dx = labelX - targetX;
   const dy = labelY - targetY;
   const dist = Math.sqrt(dx * dx + dy * dy);
@@ -38,11 +51,19 @@ export default function ConstraintEdge({
   const tipX = bwd ? -10 : 0;
   const polyPoints = `${tipX},0 ${tipX - 11},-6 ${tipX - 11},6`;
 
+  const strength = g.strength && g.strength !== "none" ? g.strength : null;
+  const { under, baseColor, baseWidth } = strengthLayers(strength, path, col);
+
   return (
     <>
+      {under.map(([stroke, width], i) => (
+        <path key={i} d={path} fill="none" stroke={stroke} strokeWidth={width} />
+      ))}
+
       <BaseEdge id={id} path={path} interactionWidth={18}
         style={{
-          stroke: col, strokeWidth: sel ? 2.2 : 1.6,
+          stroke: baseColor ?? col,
+          strokeWidth: baseWidth ?? (sel ? 2.2 : 1.6),
           strokeDasharray: g.type === "RespondedExistence" ? "6 4" : "none"
         }} />
 
@@ -68,6 +89,15 @@ export default function ConstraintEdge({
           pointerEvents: "all", fontFamily: MONO, fontSize: 10, textAlign: "center", lineHeight: 1.4,
         }}>
           <div style={{ color: col, fontWeight: "600" }}>{g.id}</div>
+          {strength && (
+            <div style={{
+              color: "#b45309",
+              fontSize: 9,
+              marginTop: 1,
+            }}>
+              {strength}
+            </div>
+          )}
           {g.corr && (
             <div style={{
               color: "#15803d",

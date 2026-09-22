@@ -1,4 +1,2 @@
 allowBuilds:
   esbuild: false
-minimumReleaseAgeExclude:
-  - autoprefixer@10.5.3

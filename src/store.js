@@ -1,7 +1,15 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 import { exCooling } from "./examples/index";
 import { coerceModel } from "./lib/compiler";
 import { LS_KEY } from "./constants";
+
+export const kindOf = (m, id) =>
+  m.ports.some((p) => p.id === id) ? "ports"
+    : m.signals.some((s) => s.id === id) ? "signals"
+      : m.junctions.some((j) => j.id === id) ? "junctions"
+        : m.activities.some((a) => a.id === id) ? "activities"
+          : null;
 
 const uid = (p) => p + Math.random().toString(36).slice(2, 6);
 const freeId = (cs, pre) => {
@@ -10,30 +18,21 @@ const freeId = (cs, pre) => {
   return `${pre}${i}`;
 };
 
-function loadModel() {
-  try {
-    const raw = localStorage.getItem(LS_KEY);
-    if (raw) return coerceModel(JSON.parse(raw));
-  } catch { /* swallowed */ }
-  return exCooling();
-}
+const blankModel = () => ({
+  signals: [], ports: [], junctions: [], activities: [], constraints: [],
+});
 
-export const useStore = create((set, get) => ({
-  model: loadModel(),
+export const useStore = create(persist((set, get) => ({
+  model: exCooling(),
   sel: null,
   tab: "stl",
-  drag: null,
   toast: null,
 
-  setModel: (m) => {
-    const next = typeof m === "function" ? m(get().model) : m;
-    set({ model: next });
-    try { localStorage.setItem(LS_KEY, JSON.stringify(next)); } catch { /* swallowed */ }
-  },
+  setModel: (m) =>
+    set((s) => ({ model: typeof m === "function" ? m(s.model) : m })),
 
   setSel: (sel) => set({ sel }),
   setTab: (tab) => set({ tab }),
-  setDrag: (drag) => set({ drag }),
 
   flash: (msg) => {
     set({ toast: msg });
@@ -92,30 +91,20 @@ export const useStore = create((set, get) => ({
         m.ports.filter((p) => p.signal === id).forEach((p) => gone.add(p.id));
         next.ports = next.ports.filter((p) => p.signal !== id);
       }
-      let changed = true, js = next.junctions;
-      while (changed) {
-        changed = false;
-        js = js.map((j) => ({ ...j, members: j.members.filter((x) => !gone.has(x)) }))
-          .filter((j) => {
-            if (gone.has(j.id)) return false;
-            return true;
-          });
-      }
-      next.junctions = js;
+      next.junctions = next.junctions
+        .map((j) => ({ ...j, members: j.members.filter((x) => !gone.has(x)) }))
+        .filter((j) => !gone.has(j.id));
       next.constraints = next.constraints.filter((g) => !gone.has(g.theta) && !gone.has(g.theta1) && !gone.has(g.theta2));
       return { model: next };
     }),
 
-  newModel: () => set({ model: { signals: [], ports: [], junctions: [], activities: [], constraints: [] }, sel: null }),
+  newModel: () => set({ model: blankModel(), sel: null }),
   loadExample: (fn) => set({ model: fn(), sel: null }),
 
   clickCondition: (e, id) => {
     e.stopPropagation();
-    const { model } = get();
-    const kind = model.ports.some((p) => p.id === id) ? "ports"
-      : model.signals.some((s) => s.id === id) ? "signals"
-      : model.junctions.some((j) => j.id === id) ? "junctions" : "activities";
-    set({ sel: { kind, id } });
+    const kind = kindOf(get().model, id);
+    if (kind) set({ sel: { kind, id } });
   },
 
   addConstraint: (from, to) => {
@@ -132,4 +121,15 @@ export const useStore = create((set, get) => ({
   setConnecting: (val) => set({ isConnecting: val }),
 
   tagOf: (id) => get().model.constraints.find((g) => g.theta === id && (g.type === "Existence" || g.type === "NotExistence")),
+}), {
+  /* Persist the model only, and on every action that touches it. */
+  name: LS_KEY,
+  partialize: (s) => ({ model: s.model }),
+  merge: (persisted, current) => {
+    try {
+      return { ...current, model: coerceModel(persisted?.model) };
+    } catch {
+      return current;
+    }
+  },
 }));

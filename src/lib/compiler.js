@@ -1,14 +1,3 @@
-export function emptyModel() {
-  return {
-    signals: [],
-    ports: [],
-    junctions: [],
-    activities: [],
-    constraints: [],
-  };
-}
-
-/** Accept any object that has the five arrays. */
 export function coerceModel(o) {
   if (!o || typeof o !== "object") throw new Error("not an object");
   const need = ["signals", "ports", "junctions", "activities", "constraints"];
@@ -20,7 +9,6 @@ export function coerceModel(o) {
   return out;
 }
 
-/** Resolve an id to a typed condition descriptor. */
 export function resolveCondition(m, id) {
   const a = m.activities.find((x) => x.id === id);
   if (a) return { kind: "activity", id: a.id, name: a.name, delta: a.delta };
@@ -49,7 +37,6 @@ export function resolveCondition(m, id) {
   return null;
 }
 
-/** Short human-readable label for a condition (used in junction member lists). */
 export function condLabel(m, id) {
   const c = resolveCondition(m, id);
   if (!c) return "?";
@@ -61,7 +48,6 @@ export function condLabel(m, id) {
 export const iv = (I) => `[${I[0]},${I[1]}]`;
 
 
-/** Recursive STL denotation of a condition. */
 export function conditionSTL(m, id, seen = new Set()) {
   const c = resolveCondition(m, id);
   if (!c || seen.has(id)) return "?";
@@ -74,27 +60,42 @@ export function conditionSTL(m, id, seen = new Set()) {
     const sep = c.op === "AND" ? " ∧ " : " ∨ ";
     base = "(" + c.members.map((x) => conditionSTL(m, x, next)).join(sep) + ")";
   }
-  return c.delta ? `G[0,${c.delta}](${base})` : base;
+  return c.delta ? `H[0,${c.delta}](${base})` : base;
 }
 
-/** STL formula for one constraint. */
+const onset = (s) => `on(${s})`;
+
+export function cardinality(g) {
+  const n = g.n ?? 1;
+  const m = g.m ?? "*";
+  return n === 1 && m === "*" ? null : { n, m };
+}
+
 export function constraintSTL(m, g) {
   if (g.type === "NotExistence")
     return `¬F${iv(g.I)}(${conditionSTL(m, g.theta)})`;
-  if (g.type === "Existence")
-    return `F${iv(g.I)}(${conditionSTL(m, g.theta)})`;
+  if (g.type === "Existence") {
+    /* Only 1..* is a formula of the fragment; a higher count counts episodes. */
+    const card = cardinality(g);
+    return card
+      ? `#episodes${iv(g.I)}(${conditionSTL(m, g.theta)}) ∈ ${card.n}..${card.m}`
+      : `F${iv(g.I)}(${conditionSTL(m, g.theta)})`;
+  }
   const s1 = conditionSTL(m, g.theta1);
   const s2 = conditionSTL(m, g.theta2);
   const corr = g.corr ? `  ∧  ${g.corr}` : "";
+  const resp = `G${iv(g.Ia)}(${onset(s1)} → F${iv(g.Ir)}(${s2}))`;
+  const prec = `G${iv(g.Ir)}(${onset(s2)} → O${iv(g.Ia)}(${s1}))`;
   switch (g.type) {
     case "Response":
-      return `G${iv(g.Ia)}(${s1} → F${iv(g.Ir)}(${s2}))${corr}`;
+      return `${resp}${corr}`;
     case "Precedence":
-      return `G${iv(g.Ir)}(${s2} → O${iv(g.Ia)}(${s1}))${corr}`;
+      return `${prec}${corr}`;
     case "Succession":
-      return `G${iv(g.Ia)}(${s1} → F${iv(g.Ir)}(${s2}))\n  ∧ G${iv(g.Ir)}(${s2} → O${iv(g.Ia)}(${s1}))${corr}`;
+      return `${resp}
+  ∧ ${prec}${corr}`;
     case "RespondedExistence":
-      return `G${iv(g.Ia)}(${s1} → F[0,m](${s2}))${corr}`;
+      return `F${iv(g.Ia)}(${s1}) → F[0,m](${s2})${corr}`;
     default:
       return "?";
   }
@@ -103,7 +104,6 @@ export function constraintSTL(m, g) {
 const negOp = (o) =>
   ({ ">": "<=", ">=": "<", "<": ">=", "<=": ">", "=": "!=" }[o]);
 
-/** Collect signal names reachable from a condition (for junction compilation). */
 export function signalsOf(m, id, seen = new Set()) {
   const c = resolveCondition(m, id);
   if (!c || seen.has(id)) return [];
@@ -115,7 +115,6 @@ export function signalsOf(m, id, seen = new Set()) {
   return [];
 }
 
-/** EPL WHERE-clause predicate for a condition (composite over SignalState window). */
 function statePred(m, id, seen = new Set()) {
   const c = resolveCondition(m, id);
   if (!c || seen.has(id)) return "true";
@@ -127,12 +126,10 @@ function statePred(m, id, seen = new Set()) {
   return "(" + c.members.map((x) => statePred(m, x, next)).join(sep) + ")";
 }
 
-/** EPL detection rule for a condition. */
 export function eplDetect(m, id, cid, role) {
   const c = resolveCondition(m, id);
   if (!c) return "";
 
-  /* discrete activity */
   if (c.kind === "activity") {
     if (!c.delta)
       return `INSERT INTO constraintStatus
@@ -144,7 +141,6 @@ export function eplDetect(m, id, cid, role) {
   -> (timer:interval(${c.delta} sec) and not GenericEvent(eventType!='${c.name}'))];`;
   }
 
-  /* continuous port */
   if (c.kind === "port") {
     const pred = `eventType='${c.signal}', cast(payload('${c.signal}'),double) ${c.op} ${c.k}`;
     if (!c.delta)
@@ -159,7 +155,6 @@ export function eplDetect(m, id, cid, role) {
                > (timer: interval (${c.delta} sec) and not ${hold})];`;
   }
 
-  /* junction: multi-signal, evaluates against SignalState named window */
   const sigs = [...new Set(signalsOf(m, id))];
   const pred = statePred(m, id);
   const head = `-- composite ${c.op} over [${sigs.join(", ")}]
@@ -182,7 +177,6 @@ export function eplDetect(m, id, cid, role) {
 
 const sec = (v) => (v === "m" || v == null ? null : Number(v));
 
-/** EPL constraint patterns (L2: temporal matching). */
 export function eplConstraint(m, g) {
   const out = [];
   const key = g.corr?.split(".")[1]?.split(/[\s=]/)[0] || "id";
@@ -206,7 +200,24 @@ export function eplConstraint(m, g) {
   out.push(eplDetect(m, g.theta1, g.id, "ACTIVATION"));
   out.push(eplDetect(m, g.theta2, g.id, "TARGET"));
 
-  const fwd = ["Response", "Succession", "RespondedExistence"].includes(g.type);
+  /* Order-free and deadline-free: the target may precede the activation, and
+     an unmet obligation stays pending for L3 rather than expiring. */
+  if (g.type === "RespondedExistence") {
+    const where = corrWhere ? `
+WHERE 1=1${corrWhere}` : "";
+    out.push(`INSERT INTO constraintStatus
+              SELECT b.id, '${g.id}' AS name, 'FULFILLMENT' AS type, b.timestamp
+              FROM pattern [every a=constraintStatus(type='ACTIVATION', name='${g.id}')
+  -> b=constraintStatus(type='TARGET', name='${g.id}')]${where};`);
+    out.push(`-- order-free: a target seen earlier discharges the obligation too
+INSERT INTO constraintStatus
+SELECT a.id, '${g.id}' AS name, 'FULFILLMENT' AS type, a.timestamp
+FROM pattern [every b=constraintStatus(type='TARGET', name='${g.id}')
+  -> a=constraintStatus(type='ACTIVATION', name='${g.id}')]${where};`);
+    return out;
+  }
+
+  const fwd = ["Response", "Succession"].includes(g.type);
   const bwd = ["Precedence", "Succession"].includes(g.type);
 
   if (fwd) {
@@ -242,27 +253,36 @@ FROM pattern [every b=constraintStatus(type='TARGET', name='${g.id}')
   return out;
 }
 
-/** Full compile: STL formulas + EPL statements per constraint. */
 export function compile(m) {
   return {
     stl: m.constraints.map((g) => ({
       id: g.id,
       type: g.type,
       formula: constraintSTL(m, g),
+      outside: outsideCore(g),
     })),
     epl: m.constraints.map((g) => ({
       id: g.id,
       type: g.type,
-      stmts: eplConstraint(m, g),
+      outside: outsideCore(g),
+      stmts: outsideCore(g) ? [] : eplConstraint(m, g),
     })),
   };
 }
 
-/* ---- well-formedness ---- */
+/* ---- well-formedness ----
+   WF1-WF5 as defined in the paper. These are properties of the *language*:
+   a model that breaks one of them denotes nothing. */
 
 export function validate(m) {
   const e = [];
-  for (const g of m.constraints) {
+
+  /* WF1: every port observes a signal, every endpoint resolves to a condition. */
+  for (const p of m.ports)
+    if (!m.signals.some((s) => s.id === p.signal))
+      e.push({ id: p.id, rule: "WF1", msg: "Port observes no signal." });
+
+  for (const g of m.constraints)
     for (const end of (g.theta ? [g.theta] : [g.theta1, g.theta2]).filter(
       Boolean,
     )) {
@@ -279,26 +299,14 @@ export function validate(m) {
           msg: "Endpoint does not resolve to a condition.",
         });
     }
-    for (const w of [g.I, g.Ia, g.Ir].filter(Boolean))
-      if (w[1] !== "m" && Number(w[0]) > Number(w[1]))
-        e.push({ id: g.id, rule: "WF2", msg: `Window ${iv(w)} is inverted.` });
-  }
-  for (const p of m.ports)
-    if (p.delta != null && !(p.delta > 0))
-      e.push({ id: p.id, rule: "WF2", msg: "Sustain duration must be positive." });
 
+  /* WF2: junctions take at least two members and nest acyclically. */
   for (const j of m.junctions) {
     if (j.members.length < 2)
       e.push({
         id: j.id,
-        rule: "WF6",
-        msg: "A junction needs at least two members.",
-      });
-    if (j.delta != null && !(j.delta > 0))
-      e.push({
-        id: j.id,
         rule: "WF2",
-        msg: "Sustain duration must be positive.",
+        msg: "A junction needs at least two members.",
       });
     const walk = (id, seen) => {
       if (seen.has(id)) return true;
@@ -308,9 +316,38 @@ export function validate(m) {
       return c.members.some((x) => walk(x, next));
     };
     if (walk(j.id, new Set()))
-      e.push({ id: j.id, rule: "WF6", msg: "Junction is cyclic." });
+      e.push({ id: j.id, rule: "WF2", msg: "Junction is cyclic." });
   }
 
+  /* WF3: sustain durations are positive, windows are ordered and finite. */
+  for (const c of [...m.ports, ...m.junctions, ...m.activities])
+    if (c.delta != null && !(c.delta > 0))
+      e.push({
+        id: c.id,
+        rule: "WF3",
+        msg: "Sustain duration must be positive.",
+      });
+
+  for (const g of m.constraints)
+    for (const w of [g.I, g.Ia, g.Ir].filter(Boolean))
+      if (w[1] !== "m" && Number(w[0]) > Number(w[1]))
+        e.push({ id: g.id, rule: "WF3", msg: `Window ${iv(w)} is inverted.` });
+
+  /* WF4: a correlation reads event payloads, so both ends must be discrete. */
+  for (const g of m.constraints) {
+    if (!g.corr) continue;
+    const continuous = [g.theta1, g.theta2]
+      .filter(Boolean)
+      .some((end) => signalsOf(m, end).length > 0);
+    if (continuous)
+      e.push({
+        id: g.id,
+        rule: "WF4",
+        msg: "Correlation reads payloads, so both endpoints must be discrete.",
+      });
+  }
+
+  /* WF5: a condition carries at most one existence tag. */
   const tags = {};
   for (const g of m.constraints)
     if (g.type === "Existence" || g.type === "NotExistence")
@@ -320,12 +357,43 @@ export function validate(m) {
       const kinds = new Set(list.map((g) => g.type));
       e.push({
         id: list[list.length - 1].id,
-        rule: kinds.size > 1 ? "WF5" : "WF4",
+        rule: "WF5",
         msg:
           kinds.size > 1
             ? "Existence and prohibition on the same condition."
             : "Condition carries more than one tag.",
       });
     }
+
   return e;
+}
+
+/* ---- executable core ----
+   Well-formedness is a property of the language; coverage is a property of
+   *this* compiler. Reported separately, never conflated. */
+
+export const CORE_TEMPLATES = [
+  "Existence",
+  "NotExistence",
+  "Response",
+  "Precedence",
+  "Succession",
+  "RespondedExistence",
+];
+
+export function outsideCore(g) {
+  if (!CORE_TEMPLATES.includes(g.type))
+    return `Template ${g.type} is outside the executable core.`;
+  if (g.strength && g.strength !== "none")
+    return `The ${g.strength} strengthening is well-formed, but the compiler does not expand it.`;
+  const card = g.type === "Existence" ? cardinality(g) : null;
+  if (card)
+    return `Cardinality ${card.n}..${card.m} counts episodes, which lies outside the STL fragment.`;
+  return null;
+}
+
+export function coverage(m) {
+  return m.constraints
+    .map((g) => ({ id: g.id, type: g.type, reason: outsideCore(g) }))
+    .filter((x) => x.reason);
 }

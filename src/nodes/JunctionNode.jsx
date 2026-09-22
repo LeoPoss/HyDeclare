@@ -29,7 +29,7 @@ export default memo(function JunctionNode({ id, data }) {
           <Badge x={JUNC_R + 16} y={JUNC_R - 36} d={data.delta}
             from={{ x: JUNC_R + 14, y: JUNC_R - 14 }} />
         )}
-        {tg && <Tag x={JUNC_R} y={0} type={tg.type} />}
+        {tg && <Tag x={JUNC_R} y={0} tag={tg} />}
       </svg>
       <Handle type="target" position={Position.Left} style={{
         position: "absolute",

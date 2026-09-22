@@ -20,6 +20,7 @@ export default [
         window: "readonly",
         localStorage: "readonly",
         Blob: "readonly",
+        structuredClone: "readonly",
         URL: "readonly",
         FileReader: "readonly",
         setTimeout: "readonly",

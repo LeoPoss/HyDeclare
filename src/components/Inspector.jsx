@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import { OPS, TEMPLATES } from "../constants";
-import { condLabel, conditionSTL, resolveCondition } from "../lib/compiler";
+import { condLabel, conditionSTL, outsideCore, resolveCondition } from "../lib/compiler";
 import { useStore } from "../store";
 import { Card, H, Muted, Inp, Sel, Btn, Row, Field } from "./UI";
 
@@ -13,6 +13,7 @@ export default function Inspector() {
   const upd      = useStore((s) => s.upd);
   const del      = useStore((s) => s.del);
   const addPort  = useStore((s) => s.addPort);
+  const addMember = useStore((s) => s.addJunctionMember);
 
   const allConditions = useMemo(() =>
     [...model.ports.map((p) => p.id), ...model.junctions.map((j) => j.id), ...model.activities.map((a) => a.id)],
@@ -43,7 +44,7 @@ export default function Inspector() {
           <Sel value="" opts={["", ...allConditions.filter((id) =>
             id !== jid && !members.includes(id) && !wouldCycle(model, jid, id)
           )]} labels={(id) => id === "" ? "select…" : condLabel(model, id)}
-            onChange={(v) => v && upd("junctions", jid, { members: [...members, v] })} />
+            onChange={(v) => v && addMember(jid, v)} />
         </Field>
       </Row>
     </>
@@ -91,22 +92,38 @@ export default function Inspector() {
         onChange={(v) => upd("constraints", sel.id, { type: v })} /></Field>
       <Field label="Ia"><Inp value={selObj.Ia[1] ?? ""}
         onChange={(v) => upd("constraints", sel.id, { Ia: [0, v === "m" || v === "" ? v : isNaN(Number(v)) ? v : Number(v)] })} /></Field>
-      <Field label="Ir"><Inp value={selObj.Ir[1] ?? ""}
-        onChange={(v) => upd("constraints", sel.id, { Ir: [0, v === "m" || v === "" ? v : isNaN(Number(v)) ? v : Number(v)] })} /></Field>
+      {selObj.type !== "RespondedExistence" && (
+        <Field label="Ir"><Inp value={selObj.Ir[1] ?? ""}
+          onChange={(v) => upd("constraints", sel.id, { Ir: [0, v === "m" || v === "" ? v : isNaN(Number(v)) ? v : Number(v)] })} /></Field>
+      )}
     </Row>
     <Row>
       <Field label="Correlation"><Inp value={selObj.corr ?? ""} placeholder="x.a = y.a"
         onChange={(v) => upd("constraints", sel.id, { corr: v || undefined })} /></Field>
       <Btn danger onClick={() => { del("constraints", sel.id); setSel(null); }}>Delete</Btn>
     </Row>
+    <CoreNote g={selObj} />
   </>);
 
   if (sel.kind === "constraints") return wrap(<>
     <div className="text-zinc-500 text-[11px]">{selObj.type} on {condLabel(model, selObj.theta)}</div>
     <Row className="mt-1"><Btn danger onClick={() => { del("constraints", sel.id); setSel(null); }}>Delete</Btn></Row>
+    <CoreNote g={selObj} />
   </>);
 
   return null;
+}
+
+/* The editor never authors one of these; they arrive only by import. */
+function CoreNote({ g }) {
+  const reason = outsideCore(g);
+  if (!reason) return null;
+  return (
+    <div className="text-[10.5px] leading-[1.4] rounded border border-amber-500/40 bg-amber-50 text-amber-800 px-2 py-1.5">
+      <span className="font-semibold">Outside the executable core. </span>
+      {reason} The model stays well-formed; no EPL is generated for it.
+    </div>
+  );
 }
 
 function wouldCycle(m, jid, cand) {

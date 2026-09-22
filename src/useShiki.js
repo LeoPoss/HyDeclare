@@ -1,15 +1,21 @@
-import { useState, useEffect, useRef } from "react";
-import { createHighlighter } from "shiki";
+import { useState, useEffect } from "react";
+import { createHighlighterCore } from "shiki/core";
+import { createJavaScriptRegexEngine } from "shiki/engine/javascript";
+import sql from "shiki/langs/sql.mjs";
+import githubDark from "shiki/themes/github-dark.mjs";
 
 let highlighter = null;
 let initPromise = null;
 
+/* The fine-grained core with one grammar and one theme: the default shiki
+   entry point bundles every language it ships. */
 function getHighlighter() {
   if (highlighter) return Promise.resolve(highlighter);
   if (!initPromise) {
-    initPromise = createHighlighter({
-      themes: ["github-dark"],
-      langs: ["sql"],
+    initPromise = createHighlighterCore({
+      themes: [githubDark],
+      langs: [sql],
+      engine: createJavaScriptRegexEngine(),
     }).then((h) => { highlighter = h; return h; });
   }
   return initPromise;
@@ -17,14 +23,12 @@ function getHighlighter() {
 
 export function useShiki(src) {
   const [html, setHtml] = useState("");
-  const lastSrc = useRef(src);
 
   useEffect(() => {
     if (!src) return;
-    lastSrc.current = src;
     let cancelled = false;
     getHighlighter().then((h) => {
-      if (cancelled || lastSrc.current !== src) return;
+      if (cancelled) return;
       setHtml(h.codeToHtml(src, { lang: "sql", theme: "github-dark" }));
     });
     return () => { cancelled = true; };

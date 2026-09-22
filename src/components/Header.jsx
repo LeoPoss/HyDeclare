@@ -1,4 +1,6 @@
 import React, { useRef, useMemo } from "react";
+import { download } from "../download";
+import { coerceModel, coverage } from "../lib/compiler";
 import { useStore } from "../store";
 import { exCooling, exReactor } from "../examples/index";
 import { Btn } from "./UI";
@@ -15,20 +17,16 @@ export default function Header() {
   const flash       = useStore((s) => s.flash);
   const fileRef     = useRef(null);
 
-  const download = (text, name, type) => {
-    const b = new Blob([text], { type }); const u = URL.createObjectURL(b);
-    const a = document.createElement("a"); a.href = u; a.download = name; a.click(); URL.revokeObjectURL(u);
-  };
-
   const importModel = (file) => {
     const r = new FileReader();
     r.onload = () => {
       try {
-        const raw = JSON.parse(String(r.result));
-        for (const k of ["signals","ports","junctions","activities","constraints"])
-          if (!Array.isArray(raw[k])) throw new Error(`missing array: ${k}`);
+        const raw = coerceModel(JSON.parse(String(r.result)));
         setModel(raw); setSel(null);
-        flash("Model imported");
+        const outside = coverage(raw);
+        flash(outside.length
+          ? `Model imported — ${outside.length} constraint(s) outside the executable core`
+          : "Model imported");
       } catch (err) { flash(`Import failed: ${err.message}`); }
     };
     r.readAsText(file);

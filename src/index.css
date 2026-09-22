@@ -31,19 +31,10 @@ body {
     opacity: 1;
 }
 
-.activity-handle:after {
-    content: "";
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 10px;
-    height: 10px;
-    background: #FFFFFF;
-    border: 2px solid #3f3f46;
-    border-radius: 50%;
-}
+.activity-handle { --handle-ring: #3f3f46; }
+.junction-handle { --handle-ring: #0369a1; }
 
+.activity-handle:after,
 .junction-handle:after {
     content: "";
     position: absolute;
@@ -53,7 +44,7 @@ body {
     width: 10px;
     height: 10px;
     background: #FFFFFF;
-    border: 2px solid #0369a1;
+    border: 2px solid var(--handle-ring);
     border-radius: 50%;
 }
 

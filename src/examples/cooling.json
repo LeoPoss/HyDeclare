@@ -1,5 +1,5 @@
 {
-  "signals": [{ "id": "s1", "name": "Temp", "x": 80, "y": 140 }],
+  "signals": [{ "id": "s1", "name": "temp", "x": 80, "y": 140 }],
   "ports": [
     { "id": "p1", "signal": "s1", "op": ">", "k": 90, "delta": 10 },
     { "id": "p2", "signal": "s1", "op": ">", "k": 80, "delta": 10 },

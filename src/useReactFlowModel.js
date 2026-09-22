@@ -1,5 +1,5 @@
 import { useMemo, useCallback } from "react";
-import { useStore } from "./store";
+import { kindOf, useStore } from "./store";
 import { sigHeight } from "./geometry";
 import { NODE_H, SIG_W, ACT_W, JUNC_R } from "./constants";
 
@@ -66,7 +66,6 @@ export function useReactFlowModel() {
           source: ep.nodeId,
           sourceHandle: ep.handleId,
           target: j.id,
-          type: "member",
           style: { stroke: "#0369a1", strokeWidth: 1.6, opacity: 0.45 },
         });
       }
@@ -96,10 +95,7 @@ export function useReactFlowModel() {
   const onNodesChange = useCallback((changes) => {
     for (const ch of changes) {
       if (ch.type === "position" && ch.position) {
-        const kind = model.signals.some((s) => s.id === ch.id) ? "signals"
-          : model.activities.some((a) => a.id === ch.id) ? "activities"
-            : model.junctions.some((j) => j.id === ch.id) ? "junctions"
-              : null;
+        const kind = kindOf(model, ch.id);
         if (!kind) continue;
         setModel((m) => ({
           ...m,
@@ -111,10 +107,7 @@ export function useReactFlowModel() {
         }));
       }
       if (ch.type === "select" && ch.selected) {
-        const kind = model.signals.some((s) => s.id === ch.id) ? "signals"
-          : model.activities.some((a) => a.id === ch.id) ? "activities"
-            : model.junctions.some((j) => j.id === ch.id) ? "junctions"
-              : null;
+        const kind = kindOf(model, ch.id);
         if (kind) setSel({ kind, id: ch.id });
       }
     }

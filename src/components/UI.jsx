@@ -60,7 +60,7 @@ export function Inp({ value, onChange, placeholder, className = "", ...rest }) {
   );
 }
 
-export function Sel({ value, opts, onChange, labels, inline, className = "", ...rest }) {
+export function Sel({ value, opts, onChange, labels, className = "", ...rest }) {
   const lab = labels || ((v) => v);
   return (
     <select
